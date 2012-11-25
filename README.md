@@ -1,5 +1,7 @@
 # Doozer
 
+![logo](/ha/doozerd/raw/master/doc/doozer.png)
+
 ## What Is It?
 
 Doozer is a highly-available, completely consistent
@@ -18,20 +20,21 @@ other users and developers.
 ## Quick Start
 
 1. Download [doozerd](https://github.com/ha/doozerd/downloads)
-2. Unpack the archive
-3. Start a doozerd
+2. Unpack the archive and put `doozerd` in your `PATH`
+3. Repeat for [doozer](https://github.com/ha/doozer/downloads)
+4. Start a doozerd with a WebView listening on `:8080`
 
-        $ doozerd
+        $ doozerd -w ":8080"
 
-4. Set a key and read it back
+5. Set a key and read it back
 
         $ echo "hello, world" | doozer add /message
         $ doozer get /message
         hello, world
 
-5. Open <http://localhost:8080> and see your message
+6. Open <http://localhost:8080> and see your message
 
-![doozer web view](/ha/doozerd/raw/0a3a9c/doc/webview.png)
+![doozer web view](/ha/doozerd/raw/master/doc/webview.png)
 
 ## How Does It Work?
 
@@ -102,12 +105,15 @@ We have a detailed description of the [data model](https://github.com/ha/doozerd
 
 For ways to manipulate or read the data, see the [protocol spec](https://github.com/ha/doozerd/blob/master/doc/proto.md).
 
+Try out doozer's fault-tolerance with some [fire
+drills][firedrill].
+
 ## Similar Projects
 
 Doozer is similar to the following pieces of software:
 
  * Apache Zookeeper <http://zookeeper.apache.org/>
- * Google Chubby <http://labs.google.com/papers/chubby.html>
+ * Google Chubby <http://research.google.com/archive/chubby.html>
 
 ## Hacking on Doozer
 
@@ -124,3 +130,4 @@ Type `git shortlog -s` for a full list of contributors.
 
 [mail]: https://groups.google.com/group/doozer
 [LICENSE]: /ha/doozerd/blob/master/LICENSE
+[firedrill]: /ha/doozerd/blob/master/doc/firedrill.md
