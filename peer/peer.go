@@ -12,7 +12,7 @@ import (
 	"log"
 	"net"
 	"os"
-	"syscall"
+	"strings"
 	"time"
 )
 
@@ -118,7 +118,7 @@ func Main(clusterName, self, buri, rwsk, rosk string, cl *doozer.Conn, udpConn *
 				panic(e)
 			}
 		}()
-		doozer.Walk(cl, rev, "/", cloner{st.Ops, cl}, errs)
+		doozer.Walk(cl, rev, "/", cloner{st.Ops, cl, rev}, errs)
 		close(errs)
 		st.Flush()
 
@@ -151,7 +151,7 @@ func Main(clusterName, self, buri, rwsk, rosk string, cl *doozer.Conn, udpConn *
 
 	shun := make(chan string, 3) // sufficient for a cluster of 7
 	go member.Clean(shun, st, pr)
-	go server.ListenAndServe(listener, canWrite, st, pr, rwsk, rosk)
+	go server.ListenAndServe(listener, canWrite, st, pr, rwsk, rosk, self)
 
 	if rwsk == "" && rosk == "" && webListener != nil {
 		web.Store = st
@@ -188,7 +188,8 @@ func Main(clusterName, self, buri, rwsk, rosk string, cl *doozer.Conn, udpConn *
 
 		buf := make([]byte, maxUDPLen)
 		n, addr, err := udpConn.ReadFromUDP(buf)
-		if err == syscall.EINVAL {
+		if err != nil && strings.Contains(err.Error(), "use of closed network connection") {
+			log.Printf("<<<< EXITING >>>>")
 			return
 		}
 		if err != nil {
@@ -290,6 +291,7 @@ func follow(st *store.Store, cl *doozer.Conn, rev int64, stop chan bool) {
 type cloner struct {
 	ch chan<- store.Op
 	cl *doozer.Conn
+	storeRev int64
 }
 
 func (c cloner) VisitDir(path string, f *doozer.FileInfo) bool {
@@ -299,7 +301,7 @@ func (c cloner) VisitDir(path string, f *doozer.FileInfo) bool {
 func (c cloner) VisitFile(path string, f *doozer.FileInfo) {
 	// store.Clobber is okay here because the event
 	// has already passed through another store
-	body, _, err := c.cl.Get(path, &f.Rev)
+	body, _, err := c.cl.Get(path, &c.storeRev)
 	if err != nil {
 		panic(err)
 	}

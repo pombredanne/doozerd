@@ -24,6 +24,7 @@ var ops = map[int32]func(*txn){
 	int32(request_REV):    (*txn).rev,
 	int32(request_SET):    (*txn).set,
 	int32(request_STAT):   (*txn).stat,
+	int32(request_SELF):   (*txn).self,
 	int32(request_WAIT):   (*txn).wait,
 	int32(request_WALK):   (*txn).walk,
 	int32(request_ACCESS): (*txn).access,
@@ -38,7 +39,7 @@ const (
 )
 
 func (t *txn) run() {
-	verb := proto.GetInt32((*int32)(t.req.Verb))
+	verb := int32(t.req.GetVerb())
 	if f, ok := ops[verb]; ok {
 		f(t)
 	} else {
@@ -154,6 +155,11 @@ func (t *txn) rev() {
 	t.respond()
 }
 
+func (t *txn) self() {
+	t.resp.Value = []byte(t.c.self)
+	t.respond()
+}
+
 func (t *txn) stat() {
 	if !t.c.raccess {
 		t.respondOsError(syscall.EACCES)
@@ -167,7 +173,7 @@ func (t *txn) stat() {
 			return
 		}
 
-		len, rev := g.Stat(proto.GetString(t.req.Path))
+		len, rev := g.Stat(t.req.GetPath())
 		t.resp.Len = &len
 		t.resp.Rev = &rev
 		t.respond()
